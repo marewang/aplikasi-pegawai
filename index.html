@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="id">
   <head>
@@ -9,6 +8,7 @@
   </head>
   <body class="min-h-screen bg-slate-50">
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- IMPORTANT: Use relative path to avoid Rollup absolute-path resolution issues on some setups -->
+    <script type="module" src="./src/main.jsx"></script>
   </body>
 </html>
