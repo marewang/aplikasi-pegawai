@@ -9,7 +9,7 @@ import {
   Outlet,
 } from "react-router-dom";
 
-/* ====================== Error Boundary ====================== */
+/* ============ Error Boundary ============ */
 class PageBoundary extends React.Component {
   constructor(p){ super(p); this.state = { hasError: false, err: null }; }
   static getDerivedStateFromError(err){ return { hasError: true, err }; }
@@ -31,84 +31,47 @@ class PageBoundary extends React.Component {
   }
 }
 
-/* ====================== Utils Tanggal ====================== */
+/* ============ Utils tanggal ============ */
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const parseDate = (v) => {
-  if (!v) return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
+const parseDate = (v) => { if (!v) return null; const d = new Date(v); return Number.isNaN(d.getTime()) ? null : d; };
 const todayYMD = () => new Date().toISOString().slice(0, 10);
-const addYears = (date, years) => {
-  const d = parseDate(date);
-  if (!d) return null;
-  const c = new Date(d);
-  c.setFullYear(c.getFullYear() + years);
-  return c;
-};
-const ymd = (d) => {
-  const dt = parseDate(d);
-  return dt ? dt.toISOString().slice(0, 10) : "";
-};
-const human = (d) => {
-  const dt = parseDate(d);
-  return dt ? dt.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }) : "-";
-};
-const daysUntil = (d) => {
-  const dt = parseDate(d);
-  if (!dt) return null;
-  return Math.ceil((dt - new Date()) / MS_PER_DAY);
-};
-const withinNextDays = (d, days) => {
-  const n = daysUntil(d);
-  return typeof n === "number" && n >= 0 && n <= days;
-};
+const addYears = (date, years) => { const d = parseDate(date); if (!d) return null; const c = new Date(d); c.setFullYear(c.getFullYear()+years); return c; };
+const ymd = (d) => { const dt = parseDate(d); return dt ? dt.toISOString().slice(0,10) : ""; };
+const human = (d) => { const dt = parseDate(d); return dt ? dt.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}) : "-"; };
+const daysUntil = (d) => { const dt = parseDate(d); if (!dt) return null; return Math.ceil((dt - new Date())/MS_PER_DAY); };
+const withinNextDays = (d, days) => { const n = daysUntil(d); return typeof n === "number" && n >= 0 && n <= days; };
 
-/* ====================== Storage (localStorage) ====================== */
+/* ============ Storage (localStorage) ============ */
 const LS_KEY = "asnRowsV1";
-const loadRows = () => {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-};
-const saveRows = (rows) => {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(rows)); } catch {}
-};
+const loadRows = () => { try { const raw = localStorage.getItem(LS_KEY); const arr = raw ? JSON.parse(raw) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } };
+const saveRows = (rows) => { try { localStorage.setItem(LS_KEY, JSON.stringify(rows)); } catch {} };
 
-/* ====================== Context ====================== */
+/* ============ Context ============ */
 const AppCtx = React.createContext(null);
 const useApp = () => React.useContext(AppCtx);
 
-/* ====================== App ====================== */
+/* ============ App ============ */
 export default function App() {
   const [rows, setRows] = useState(() => loadRows());
-
   useEffect(() => { saveRows(rows); }, [rows]);
 
   const notif = useMemo(() => {
     try {
       const soon = [], overdue = [];
-      const src = Array.isArray(rows) ? rows : [];
-      src.forEach((row) => {
+      (rows || []).forEach((row) => {
         const items = [];
         if (row.jadwalKgbBerikutnya) items.push({ jenis: "Kenaikan Gaji Berikutnya", tanggal: row.jadwalKgbBerikutnya });
         if (row.jadwalPangkatBerikutnya) items.push({ jenis: "Kenaikan Pangkat Berikutnya", tanggal: row.jadwalPangkatBerikutnya });
-        items.forEach(it => {
+        items.forEach((it) => {
           const dt = parseDate(it.tanggal);
           if (!dt) return;
           if (withinNextDays(dt, 90)) soon.push({ ...row, ...it });
           else if (dt < new Date()) overdue.push({ ...row, ...it });
         });
       });
-      const byDate = (a, b) => (parseDate(a.tanggal)?.getTime() ?? 0) - (parseDate(b.tanggal)?.getTime() ?? 0);
+      const byDate = (a,b) => (parseDate(a.tanggal)?.getTime() ?? 0) - (parseDate(b.tanggal)?.getTime() ?? 0);
       return { soon: soon.sort(byDate), overdue: overdue.sort(byDate) };
-    } catch {
-      return { soon: [], overdue: [] };
-    }
+    } catch { return { soon: [], overdue: [] }; }
   }, [rows]);
 
   return (
@@ -135,14 +98,15 @@ export default function App() {
   );
 }
 
-/* ====================== Shell (Layout + Nav) ====================== */
+/* ============ Shell (layout + nav) ============ */
 function Shell({ children }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
   const LinkBtn = ({ to, label }) => (
     <button
       onClick={() => navigate(to)}
-      className={\`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm \${pathname.startsWith(to) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white hover:bg-slate-50"}\`}
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${pathname.startsWith(to) ? "bg-indigo-600 text-white border-indigo-600" : "bg-white hover:bg-slate-50"}`}
     >
       {label}
     </button>
@@ -154,12 +118,16 @@ function Shell({ children }) {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white grid place-content-center font-bold">A</div>
           <div className="flex-1">
-            <h1 className="text-lg font-semibold leading-tight">Monitoring Kenaikan Gaji & Pangkat Berikutnya (ASN)</h1>
-            <p className="text-xs text-slate-500 -mt-0.5">Pantau otomatis & simpan offline (localStorage).</p>
+            <h1 className="text-lg font-semibold leading-tight">
+              Monitoring Kenaikan Gaji & Pangkat Berikutnya (ASN)
+            </h1>
+            <p className="text-xs text-slate-500 -mt-0.5">
+              Pantau otomatis & simpan offline (localStorage).
+            </p>
           </div>
           <button
             onClick={() => navigate("/notifikasi")}
-            className={\`px-3 py-1.5 rounded-lg border text-sm \${pathname.startsWith("/notifikasi") ? "bg-indigo-600 text-white border-indigo-600" : "bg-white hover:bg-slate-50"}\`}
+            className={`px-3 py-1.5 rounded-lg border text-sm ${pathname.startsWith("/notifikasi") ? "bg-indigo-600 text-white border-indigo-600" : "bg-white hover:bg-slate-50"}`}
           >
             🔔 Notifikasi
           </button>
@@ -182,7 +150,7 @@ function Shell({ children }) {
   );
 }
 
-/* ====================== Form Input ====================== */
+/* ============ Form Input ============ */
 function FormInput() {
   const { setRows } = useApp();
   const [form, setForm] = useState({
@@ -251,7 +219,7 @@ function FormInput() {
   );
 }
 
-/* ====================== Tabel Data ====================== */
+/* ============ Tabel Data ============ */
 function TabelData() {
   const { rows, setRows } = useApp();
   const [q, setQ] = useState("");
@@ -260,33 +228,28 @@ function TabelData() {
   const [sortAsc, setSortAsc] = useState(true);
 
   const filtered = useMemo(() => {
-    try {
-      const src = Array.isArray(rows) ? rows : [];
-      const term = q.trim().toLowerCase();
-      const withMeta = src.map((r) => {
-        const dueInKgb = daysUntil(r.jadwalKgbBerikutnya);
-        const dueInPangkat = daysUntil(r.jadwalPangkatBerikutnya);
-        const nearest = Math.min(dueInKgb ?? Infinity, dueInPangkat ?? Infinity);
-        let status = "ok";
-        if (!Number.isFinite(nearest)) status = "ok";
-        else if (nearest < 0) status = "overdue";
-        else if (nearest <= 90) status = "soon";
-        return { ...r, dueInKgb, dueInPangkat, nearest, status };
-      });
-      let list = withMeta;
-      if (term) list = list.filter((r) =>
-        (r.nama || "").toLowerCase().includes(term) ||
-        (r.nip || "").toLowerCase().includes(term) ||
-        (r.telp || "").toLowerCase().includes(term)
-      );
-      if (statusFilter !== "all") list = list.filter((r) => r.status === statusFilter);
-      list.sort((a, b) => (a.nama || "").localeCompare(b.nama || "", "id", { sensitivity: "base" }));
-      if (!sortAsc) list.reverse();
-      return list;
-    } catch (e) {
-      console.error("table calc error", e);
-      return [];
-    }
+    const src = Array.isArray(rows) ? rows : [];
+    const term = q.trim().toLowerCase();
+    const withMeta = src.map((r) => {
+      const dueInKgb = daysUntil(r.jadwalKgbBerikutnya);
+      const dueInPangkat = daysUntil(r.jadwalPangkatBerikutnya);
+      const nearest = Math.min(dueInKgb ?? Infinity, dueInPangkat ?? Infinity);
+      let status = "ok";
+      if (!Number.isFinite(nearest)) status = "ok";
+      else if (nearest < 0) status = "overdue";
+      else if (nearest <= 90) status = "soon";
+      return { ...r, dueInKgb, dueInPangkat, nearest, status };
+    });
+    let list = withMeta;
+    if (term) list = list.filter((r) =>
+      (r.nama || "").toLowerCase().includes(term) ||
+      (r.nip || "").toLowerCase().includes(term) ||
+      (r.telp || "").toLowerCase().includes(term)
+    );
+    if (statusFilter !== "all") list = list.filter((r) => r.status === statusFilter);
+    list.sort((a, b) => (a.nama || "").localeCompare(b.nama || "", "id", { sensitivity: "base" }));
+    if (!sortAsc) list.reverse();
+    return list;
   }, [rows, q, statusFilter, sortAsc]);
 
   const onDelete = (id) => {
@@ -324,7 +287,7 @@ function TabelData() {
         </div>
       }
     >
-      <div className={\`overflow-auto rounded-xl border border-slate-200 \${compact ? "text-xs" : "text-sm"}\`}>
+      <div className={`overflow-auto rounded-xl border border-slate-200 ${compact ? "text-xs" : "text-sm"}`}>
         <table className="min-w-full">
           <thead className="sticky top-0 z-10">
             <tr className="bg-white/95 backdrop-blur text-slate-600 border-b">
@@ -333,7 +296,7 @@ function TabelData() {
           </thead>
           <tbody>
             {filtered.map((r, idx) => (
-              <tr key={r.id ?? idx} className={\`group transition \${idx % 2 ? "bg-white" : "bg-slate-50/40"} hover:bg-indigo-50/30\`}>
+              <tr key={r.id ?? idx} className={`group transition ${idx % 2 ? "bg-white" : "bg-slate-50/40"} hover:bg-indigo-50/30`}>
                 <Td>{r.nama}</Td>
                 <Td>{r.nip}</Td>
                 <Td>{r.telp || "-"}</Td>
@@ -360,27 +323,17 @@ function TabelData() {
   );
 }
 
-/* ====================== Dashboard & Notifikasi ====================== */
+/* ============ Dashboard & Notifikasi ============ */
 function PanelDashboard() {
   const { rows = [], notif = { soon: [], overdue: [] } } = useApp() || {};
   const total = rows.length;
-
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <Card title="Ringkasan" subtitle="Ikhtisar status pegawai & jadwal">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-            <div className="text-xs text-slate-500">Total Pegawai</div>
-            <div className="text-2xl font-semibold mt-1">{total}</div>
-          </div>
-          <div className="rounded-xl border border-amber-200 p-4 bg-amber-50">
-            <div className="text-xs text-amber-700">Segera (≤3 bln)</div>
-            <div className="text-2xl font-semibold mt-1">{(notif.soon||[]).length}</div>
-          </div>
-          <div className="rounded-xl border border-rose-200 p-4 bg-rose-50">
-            <div className="text-xs text-rose-700">Terlewat</div>
-            <div className="text-2xl font-semibold mt-1">{(notif.overdue||[]).length}</div>
-          </div>
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50"><div className="text-xs text-slate-500">Total Pegawai</div><div className="text-2xl font-semibold mt-1">{total}</div></div>
+          <div className="rounded-xl border border-amber-200 p-4 bg-amber-50"><div className="text-xs text-amber-700">Segera (≤3 bln)</div><div className="text-2xl font-semibold mt-1">{(notif.soon||[]).length}</div></div>
+          <div className="rounded-xl border border-rose-200 p-4 bg-rose-50"><div className="text-xs text-rose-700">Terlewat</div><div className="text-2xl font-semibold mt-1">{(notif.overdue||[]).length}</div></div>
         </div>
       </Card>
 
@@ -434,21 +387,21 @@ function NotifItem({ r, tone = "amber", overdue = false }) {
   const d = daysUntil(r.tanggal);
   const days = typeof d === "number" ? Math.abs(d) : "-";
   return (
-    <div className={\`border rounded-xl p-3 flex items-center justify-between \${tone === "amber" ? "bg-amber-50 border-amber-200" : "bg-rose-50 border-rose-200"}\`}>
+    <div className={`border rounded-xl p-3 flex items-center justify-between ${tone === "amber" ? "bg-amber-50 border-amber-200" : "bg-rose-50 border-rose-200"}`}>
       <div>
         <div className="font-medium">{r.nama} <span className="text-xs text-slate-500">({r.nip})</span></div>
-        <div className="text-xs text-slate-600">{r.jenis} pada <b>{human(r.tanggal)}</b> {overdue ? \`(\${days} hari yang lalu)\` : \`(sisa \${days} hari)\`}</div>
+        <div className="text-xs text-slate-600">{r.jenis} pada <b>{human(r.tanggal)}</b> {overdue ? `(${days} hari yang lalu)` : `(sisa ${days} hari)`}</div>
       </div>
-      <span className={\`text-xs px-2 py-1 rounded-full border \${tone === "amber" ? "bg-white text-amber-700 border-amber-300" : "bg-white text-rose-700 border-rose-300"}\`}>Pengingat</span>
+      <span className={`text-xs px-2 py-1 rounded-full border ${tone === "amber" ? "bg-white text-amber-700 border-amber-300" : "bg-white text-rose-700 border-rose-300"}`}>Pengingat</span>
     </div>
   );
 }
 function NotifList({ items = [], tone = "amber", overdue = false, emptyText = "Tidak ada data." }) {
   if (!items.length) return <div className="text-sm text-slate-500 border border-dashed rounded-xl p-4">{emptyText}</div>;
-  return <div className="space-y-3">{items.map((r, idx) => (<NotifItem key={\`\${r.id ?? idx}-\${r.jenis}\`} r={r} tone={tone} overdue={overdue} />))}</div>;
+  return <div className="space-y-3">{items.map((r, idx) => (<NotifItem key={`${r.id ?? idx}-${r.jenis}`} r={r} tone={tone} overdue={overdue} />))}</div>;
 }
 
-/* ====================== Komponen Reusable ====================== */
+/* ============ UI kecil ============ */
 function Card({ title, subtitle, extra, children }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -472,7 +425,7 @@ function SegmentedControl({ value, onChange, options = [] }) {
         return (
           <button key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={\`px-2.5 py-1.5 text-sm \${active ? "bg-indigo-600 text-white" : "bg-white hover:bg-slate-50"}\`}>
+            className={`px-2.5 py-1.5 text-sm ${active ? "bg-indigo-600 text-white" : "bg-white hover:bg-slate-50"}`}>
             {opt.label}
           </button>
         );
@@ -498,7 +451,7 @@ function ConfirmDialog({ open, title, children, onCancel, onConfirm }) {
   );
 }
 
-/* ====================== Export/Import ====================== */
+/* ============ Export/Import JSON ============ */
 function exportJSON(rows = []) {
   const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
