@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --port 4173"
+    "preview": "vite preview --port 4173",
+    "prepare": "echo ready"
   },
   "dependencies": {
     "dexie": "^4.0.7",
